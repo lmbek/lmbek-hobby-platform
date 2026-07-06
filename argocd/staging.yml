@@ -1,0 +1,41 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: hobby-applications-staging
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/lmbek/infrastructure.git
+    targetRevision: main
+    path: platform/overlays/staging/applications
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: staging
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: hobby-docs-staging
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/lmbek/infrastructure.git
+    targetRevision: main
+    path: platform/overlays/staging/docs
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: staging
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

@@ -1,0 +1,41 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: hobby-applications-production
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/lmbek/infrastructure.git
+    targetRevision: main
+    path: platform/overlays/production/applications
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: production
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: hobby-docs-production
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/lmbek/infrastructure.git
+    targetRevision: main
+    path: platform/overlays/production/docs
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: production
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

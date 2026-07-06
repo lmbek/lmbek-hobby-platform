@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: placeholder1-service
+spec:
+  selector:
+    app: placeholder1-service
+  ports:
+    - port: 8082
+      targetPort: 8082
+      protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: placeholder2-service
+spec:
+  selector:
+    app: placeholder2-service
+  ports:
+    - port: 8081
+      targetPort: 8081
+      protocol: TCP
