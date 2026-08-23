@@ -1,0 +1,46 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: platform-ingress
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.middlewares: staging-redirect-to-https@kubernetescrd,staging-security-headers@kubernetescrd
+spec:
+  tls:
+    - hosts:
+        - staging.lmbek.local
+        - "*.staging.lmbek.local"
+      secretName: staging-platform-tls
+  rules:
+    - host: staging.lmbek.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: web-frontend
+                port:
+                  number: 8080
+          - path: /service1
+            pathType: Prefix
+            backend:
+              service:
+                name: placeholder1-service
+                port:
+                  number: 8082
+          - path: /service2
+            pathType: Prefix
+            backend:
+              service:
+                name: placeholder2-service
+                port:
+                  number: 8081
+          - path: /docs
+            pathType: Prefix
+            backend:
+              service:
+                name: docs
+                port:
+                  number: 80

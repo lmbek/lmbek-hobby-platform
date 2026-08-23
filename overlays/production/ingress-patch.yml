@@ -1,0 +1,46 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: platform-ingress
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.middlewares: production-redirect-to-https@kubernetescrd,production-security-headers@kubernetescrd
+spec:
+  tls:
+    - hosts:
+        - lmbek.local
+        - "*.lmbek.local"
+      secretName: production-platform-tls
+  rules:
+    - host: lmbek.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: web-frontend
+                port:
+                  number: 8080
+          - path: /service1
+            pathType: Prefix
+            backend:
+              service:
+                name: placeholder1-service
+                port:
+                  number: 8082
+          - path: /service2
+            pathType: Prefix
+            backend:
+              service:
+                name: placeholder2-service
+                port:
+                  number: 8081
+          - path: /docs
+            pathType: Prefix
+            backend:
+              service:
+                name: docs
+                port:
+                  number: 80

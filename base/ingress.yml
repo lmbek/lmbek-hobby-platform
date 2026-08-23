@@ -1,0 +1,38 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: platform-ingress
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: web-frontend
+                port:
+                  number: 8080
+          - path: /service1
+            pathType: Prefix
+            backend:
+              service:
+                name: placeholder1-service
+                port:
+                  number: 8082
+          - path: /service2
+            pathType: Prefix
+            backend:
+              service:
+                name: placeholder2-service
+                port:
+                  number: 8081
+          - path: /docs
+            pathType: Prefix
+            backend:
+              service:
+                name: docs
+                port:
+                  number: 80
