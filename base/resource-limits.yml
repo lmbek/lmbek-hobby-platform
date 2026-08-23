@@ -1,0 +1,23 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# LimitRange & Resource Quotas (Compute Boundaries to Prevent Exhaustion)
+# ─────────────────────────────────────────────────────────────────────────────
+
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-limits
+spec:
+  limits:
+    - default:
+        cpu: 200m
+        memory: 256Mi
+      defaultRequest:
+        cpu: 10m
+        memory: 32Mi
+      max:
+        cpu: 1000m
+        memory: 1Gi
+      min:
+        cpu: 5m
+        memory: 16Mi
+      type: Container
