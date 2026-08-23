@@ -13,9 +13,9 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: web-frontend
+                name: placeholder1-service
                 port:
-                  number: 8080
+                  number: 8082
     - host: placeholder1.lmbek.local
       http:
         paths:
@@ -46,3 +46,13 @@ spec:
                 name: docs
                 port:
                   number: 80
+    - host: web.lmbek.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: web-frontend
+                port:
+                  number: 8080

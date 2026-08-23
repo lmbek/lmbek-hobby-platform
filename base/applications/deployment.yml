@@ -14,10 +14,20 @@ spec:
       labels:
         app.kubernetes.io/name: placeholder1-service
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
       containers:
         - name: placeholder1-service
           image: ghcr.io/lmbek/lmbek-hobby-placeholder1-service:latest
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
           ports:
             - containerPort: 8082
               name: http
@@ -45,10 +55,20 @@ spec:
       labels:
         app.kubernetes.io/name: placeholder2-service
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
       containers:
         - name: placeholder2-service
           image: ghcr.io/lmbek/lmbek-hobby-placeholder2-service:latest
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
           ports:
             - containerPort: 8081
               name: http
