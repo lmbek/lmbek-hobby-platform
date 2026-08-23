@@ -23,21 +23,30 @@ spec:
                 name: web-frontend
                 port:
                   number: 8080
-          - path: /service1
+    - host: placeholder1.staging.lmbek.local
+      http:
+        paths:
+          - path: /
             pathType: Prefix
             backend:
               service:
                 name: placeholder1-service
                 port:
                   number: 8082
-          - path: /service2
+    - host: placeholder2.staging.lmbek.local
+      http:
+        paths:
+          - path: /
             pathType: Prefix
             backend:
               service:
                 name: placeholder2-service
                 port:
                   number: 8081
-          - path: /docs
+    - host: docs.staging.lmbek.local
+      http:
+        paths:
+          - path: /
             pathType: Prefix
             backend:
               service:

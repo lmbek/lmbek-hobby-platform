@@ -6,7 +6,8 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
 spec:
   rules:
-    - http:
+    - host: lmbek.local
+      http:
         paths:
           - path: /
             pathType: Prefix
@@ -15,21 +16,30 @@ spec:
                 name: web-frontend
                 port:
                   number: 8080
-          - path: /service1
+    - host: placeholder1.lmbek.local
+      http:
+        paths:
+          - path: /
             pathType: Prefix
             backend:
               service:
                 name: placeholder1-service
                 port:
                   number: 8082
-          - path: /service2
+    - host: placeholder2.lmbek.local
+      http:
+        paths:
+          - path: /
             pathType: Prefix
             backend:
               service:
                 name: placeholder2-service
                 port:
                   number: 8081
-          - path: /docs
+    - host: docs.lmbek.local
+      http:
+        paths:
+          - path: /
             pathType: Prefix
             backend:
               service:
