@@ -7,3 +7,5 @@ resources:
   - docs
   - middlewares.yml
   - ingress.yml
+  - network-policies.yml
+  - resource-limits.yml

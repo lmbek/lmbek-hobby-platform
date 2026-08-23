@@ -18,6 +18,8 @@ spec:
         runAsNonRoot: true
         runAsUser: 10001
         runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: placeholder1-service
           image: ghcr.io/lmbek/lmbek-hobby-placeholder1-service:latest
@@ -59,6 +61,8 @@ spec:
         runAsNonRoot: true
         runAsUser: 10001
         runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: placeholder2-service
           image: ghcr.io/lmbek/lmbek-hobby-placeholder2-service:latest

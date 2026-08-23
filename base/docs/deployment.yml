@@ -18,6 +18,8 @@ spec:
         runAsNonRoot: true
         runAsUser: 101
         runAsGroup: 101
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: docs
           image: ghcr.io/lmbek/lmbek-hobby-docs:latest

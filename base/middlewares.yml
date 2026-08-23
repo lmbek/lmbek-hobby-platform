@@ -18,7 +18,7 @@ metadata:
 spec:
   headers:
     sslRedirect: true
-    stsSeconds: 31536000
+    stsSeconds: 63072000
     stsIncludeSubdomains: true
     stsPreload: true
     forceSTSHeader: true
@@ -26,6 +26,29 @@ spec:
     browserXssFilter: true
     customFrameOptionsValue: "SAMEORIGIN"
     referrerPolicy: "strict-origin-when-cross-origin"
+    permissionsPolicy: "camera=(), microphone=(), geolocation=(), payment=()"
+    customResponseHeaders:
+      X-Permitted-Cross-Domain-Policies: "none"
+      X-Download-Options: "noopen"
+      Cross-Origin-Opener-Policy: "same-origin"
+---
+apiVersion: traefik.io/v1alpha1
+kind: TLSOption
+metadata:
+  name: default
+spec:
+  minVersion: VersionTLS12
+  sniStrict: true
+  cipherSuites:
+    - TLS_AES_128_GCM_SHA256
+    - TLS_AES_256_GCM_SHA384
+    - TLS_CHACHA20_POLY1305_SHA256
+    - ECDHE-ECDSA-AES128-GCM-SHA256
+    - ECDHE-RSA-AES128-GCM-SHA256
+    - ECDHE-ECDSA-AES256-GCM-SHA384
+    - ECDHE-RSA-AES256-GCM-SHA384
+    - ECDHE-ECDSA-CHACHA20-POLY1305
+    - ECDHE-RSA-CHACHA20-POLY1305
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware

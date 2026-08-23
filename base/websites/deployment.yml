@@ -18,6 +18,8 @@ spec:
         runAsNonRoot: true
         runAsUser: 10001
         runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: web-frontend
           image: ghcr.io/lmbek/lmbek-hobby-web-frontend:latest
