@@ -3,65 +3,59 @@ kind: Deployment
 metadata:
   name: placeholder1-service
   labels:
-    app: placeholder1-service
+    app.kubernetes.io/name: placeholder1-service
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: placeholder1-service
+      app.kubernetes.io/name: placeholder1-service
   template:
     metadata:
       labels:
-        app: placeholder1-service
+        app.kubernetes.io/name: placeholder1-service
     spec:
       containers:
         - name: placeholder1-service
           image: ghcr.io/lmbek/lmbek-hobby-placeholder1-service:latest
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8082
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: 8082
-            initialDelaySeconds: 5
-            periodSeconds: 10
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 8082
-            initialDelaySeconds: 10
-            periodSeconds: 30
+              name: http
+          resources:
+            requests:
+              cpu: 20m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: placeholder2-service
   labels:
-    app: placeholder2-service
+    app.kubernetes.io/name: placeholder2-service
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: placeholder2-service
+      app.kubernetes.io/name: placeholder2-service
   template:
     metadata:
       labels:
-        app: placeholder2-service
+        app.kubernetes.io/name: placeholder2-service
     spec:
       containers:
         - name: placeholder2-service
           image: ghcr.io/lmbek/lmbek-hobby-placeholder2-service:latest
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8081
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: 8081
-            initialDelaySeconds: 5
-            periodSeconds: 10
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 8081
-            initialDelaySeconds: 10
-            periodSeconds: 30
+              name: http
+          resources:
+            requests:
+              cpu: 20m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi

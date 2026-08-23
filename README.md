@@ -1,53 +1,75 @@
-# Platform — Kubernetes & ArgoCD
+# Platform Kubernetes Manifests & GitOps State
 
-This directory contains the Kubernetes manifests and ArgoCD application definitions for **staging** and **production** deployments.
+This repository holds the declarative Kubernetes manifests and Kustomize overlays managed by ArgoCD.
 
-Local development uses Docker Compose and lives in the [orchestrators](../../orchestrators) repository.
+---
 
-## Structure
+## 📁 Manifest Organization
 
-```
-platform/
-├── argocd/                        # ArgoCD Application CRDs
-│   ├── staging.yml                # Apps syncing staging overlays
-│   └── production.yml             # Apps syncing production overlays
-├── base/                          # Shared Kubernetes manifests
-│   ├── applications/              # Deployments + Services for app services
-│   │   ├── deployment.yml
-│   │   ├── service.yml
-│   │   └── kustomization.yml
-│   └── docs/                      # Deployment + Service for docs
-│       ├── deployment.yml
-│       ├── service.yml
-│       └── kustomization.yml
-└── overlays/                      # Environment-specific overrides (Kustomize)
-    ├── staging/
-    │   ├── applications/
-    │   │   └── kustomization.yml  # Sets namespace=staging, image tag=stage
-    │   └── docs/
-    │       └── kustomization.yml
-    └── production/
-        ├── applications/
-        │   └── kustomization.yml  # Sets namespace=production, image tag=latest
-        └── docs/
-            └── kustomization.yml
+```text
+├── cert-manager/           cert-manager v1.17.1 & Let's Encrypt ClusterIssuers (staging & prod)
+├── base/                   Shared workload definitions (Deployments, Services, Ingress, Middlewares)
+│   ├── websites/           web-frontend website (Port 8080)
+│   ├── applications/       placeholder1 (8082) & placeholder2 (8081)
+│   ├── docs/               docs portal (Port 80)
+│   ├── middlewares.yml     Security headers, HTTPS redirect & rate limiting
+│   ├── ingress.yml         Traefik path-based Ingress routing
+│   └── kustomization.yml
+├── overlays/
+│   ├── staging/            Staging environment overlay (staging namespace, staging certs & hosts)
+│   └── production/         Production environment overlay (production namespace, prod certs & hosts)
+└── argocd/                 ArgoCD Application CRDs
+    ├── staging.yml
+    └── production.yml
 ```
 
-## How it works
+---
 
-1. **Base manifests** define Deployments and Services with sensible defaults.
-2. **Overlays** use Kustomize to set the namespace and image tags per environment.
-3. **ArgoCD Applications** point to the overlay paths and automatically sync changes from Git.
+## 🔒 Automated TLS Certificates & Proxies
 
-## Adding a new service
+- **cert-manager**: Automatically provisions and renews SSL/TLS certificates from Let's Encrypt using HTTP-01 challenges via Traefik.
+- **ClusterIssuers**:
+  - `letsencrypt-staging`: Testing solver to prevent Let's Encrypt rate limits.
+  - `letsencrypt-prod`: Trusted production CA issuing valid certificates into `production-platform-tls`.
+- **Traefik Middlewares**:
+  - `redirect-to-https`: Automatic HTTP to HTTPS upgrade.
+  - `security-headers`: HSTS, X-Content-Type-Options, X-Frame-Options, X-XSS-Protection.
+  - `rate-limit`: Request burst and rate protection.
 
-1. Add a Deployment and Service to `base/applications/` (or create a new base directory).
-2. Reference it in the base `kustomization.yml`.
-3. Update the overlay `kustomization.yml` files to set the correct image tag.
-4. ArgoCD will automatically pick up the changes on the next sync.
+---
 
-## Prerequisites
+## 🌐 Ingress Routing Map
 
-- A Kubernetes cluster with ArgoCD installed.
-- Update the `repoURL` in the ArgoCD manifests to match your actual Git repository URL.
-- The base manifests use `ghcr.io/lmbek` (GitHub Container Registry). Update if your organisation or registry differs.
+All services are exposed via Traefik Ingress on standard HTTP/HTTPS:
+- `/` &rarr; `web-frontend:8080`
+- `/service1` &rarr; `placeholder1-service:8082`
+- `/service2` &rarr; `placeholder2-service:8081`
+- `/docs` &rarr; `docs:80`
+
+---
+
+## 🚀 Promotion & Deployment Lifecycle
+
+| Environment | Trigger | Image Tags | Namespace | Target URL |
+|---|---|---|---|---|
+| **Staging** | `git push` to `main` | `staging-latest`, `staging-<sha>` | `staging` | `https://staging.<your-ip>` |
+| **Production** | GitHub Release published (`v*.*.*`) | `latest`, `v*.*.*`, `<sha>` | `production` | `https://<your-ip>` |
+
+ArgoCD continuously monitors this platform repository and auto-reconciles workloads in both namespaces with zero downtime.
+
+---
+
+## 🛠️ Testing Manifests Locally
+
+You can render and validate Kustomize overlays using `kubectl`:
+
+```bash
+# Render Base:
+kubectl kustomize base
+
+# Render Staging Overlay:
+kubectl kustomize overlays/staging
+
+# Render Production Overlay:
+kubectl kustomize overlays/production
+```

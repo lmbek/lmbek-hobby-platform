@@ -8,6 +8,6 @@ resources:
 
 images:
   - name: ghcr.io/lmbek/lmbek-hobby-placeholder1-service
-    newTag: stage
+    newTag: staging-latest
   - name: ghcr.io/lmbek/lmbek-hobby-placeholder2-service
-    newTag: stage
+    newTag: staging-latest

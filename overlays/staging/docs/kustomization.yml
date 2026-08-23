@@ -8,4 +8,4 @@ resources:
 
 images:
   - name: ghcr.io/lmbek/lmbek-hobby-docs
-    newTag: stage
+    newTag: staging-latest

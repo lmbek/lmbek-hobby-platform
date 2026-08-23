@@ -2,22 +2,28 @@ apiVersion: v1
 kind: Service
 metadata:
   name: placeholder1-service
+  labels:
+    app.kubernetes.io/name: placeholder1-service
 spec:
-  selector:
-    app: placeholder1-service
+  type: ClusterIP
   ports:
-    - port: 8082
-      targetPort: 8082
-      protocol: TCP
+    - name: http
+      port: 8082
+      targetPort: http
+  selector:
+    app.kubernetes.io/name: placeholder1-service
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: placeholder2-service
+  labels:
+    app.kubernetes.io/name: placeholder2-service
 spec:
-  selector:
-    app: placeholder2-service
+  type: ClusterIP
   ports:
-    - port: 8081
-      targetPort: 8081
-      protocol: TCP
+    - name: http
+      port: 8081
+      targetPort: http
+  selector:
+    app.kubernetes.io/name: placeholder2-service

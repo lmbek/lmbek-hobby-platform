@@ -1,35 +1,16 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: hobby-applications-staging
+  name: staging-platform
   namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
   source:
-    repoURL: https://github.com/lmbek/infrastructure.git
-    targetRevision: main
-    path: platform/overlays/staging/applications
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: staging
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
----
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: hobby-docs-staging
-  namespace: argocd
-spec:
-  project: default
-  source:
-    repoURL: https://github.com/lmbek/infrastructure.git
-    targetRevision: main
-    path: platform/overlays/staging/docs
+    repoURL: git@github.com:lmbek/lmbek-hobby-platform.git
+    targetRevision: HEAD
+    path: overlays/staging
   destination:
     server: https://kubernetes.default.svc
     namespace: staging
