@@ -4,6 +4,7 @@ kind: Kustomization
 namespace: staging
 
 resources:
+  - namespace.yml
   - ../../base
 
 patches:

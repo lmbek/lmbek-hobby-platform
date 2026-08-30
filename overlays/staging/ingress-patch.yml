@@ -5,55 +5,19 @@ metadata:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-staging
     traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
-    traefik.ingress.kubernetes.io/router.middlewares: staging-redirect-to-https@kubernetescrd,staging-security-headers@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: staging-redirect-to-https@kubernetescrd,staging-security-headers@kubernetescrd,staging-rate-limit@kubernetescrd
 spec:
+  ingressClassName: traefik
   tls:
     - hosts:
-        - staging.lmbek.local
-        - "*.staging.lmbek.local"
+        - staging.lmbek.dk
+        - placeholder1.staging.lmbek.dk
+        - placeholder2.staging.lmbek.dk
+        - docs.staging.lmbek.dk
+        - web.staging.lmbek.dk
       secretName: staging-platform-tls
   rules:
-    - host: staging.lmbek.local
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: placeholder1-service
-                port:
-                  number: 8082
-    - host: placeholder1.staging.lmbek.local
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: placeholder1-service
-                port:
-                  number: 8082
-    - host: placeholder2.staging.lmbek.local
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: placeholder2-service
-                port:
-                  number: 8081
-    - host: docs.staging.lmbek.local
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: docs
-                port:
-                  number: 80
-    - host: web.staging.lmbek.local
+    - host: staging.lmbek.dk
       http:
         paths:
           - path: /
@@ -62,4 +26,44 @@ spec:
               service:
                 name: web-frontend
                 port:
-                  number: 8080
+                  name: http
+    - host: placeholder1.staging.lmbek.dk
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: placeholder1-service
+                port:
+                  name: http
+    - host: placeholder2.staging.lmbek.dk
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: placeholder2-service
+                port:
+                  name: http
+    - host: docs.staging.lmbek.dk
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: docs
+                port:
+                  name: http
+    - host: web.staging.lmbek.dk
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: web-frontend
+                port:
+                  name: http

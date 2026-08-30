@@ -27,6 +27,7 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
+            runAsNonRoot: true
             capabilities:
               drop:
                 - ALL
@@ -40,6 +41,22 @@ spec:
             limits:
               cpu: 100m
               memory: 128Mi
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            failureThreshold: 12
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 15
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -70,6 +87,7 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
+            runAsNonRoot: true
             capabilities:
               drop:
                 - ALL
@@ -83,3 +101,19 @@ spec:
             limits:
               cpu: 100m
               memory: 128Mi
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            failureThreshold: 12
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 15
