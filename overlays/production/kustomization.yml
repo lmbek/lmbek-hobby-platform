@@ -5,17 +5,19 @@ namespace: production
 
 resources:
   - namespace.yml
+  - ../../cert-manager
   - ../../base
+  - certificate.yml
 
 patches:
   - path: ingress-patch.yml
 
 images:
   - name: ghcr.io/lmbek/lmbek-hobby-web-frontend
-    newTag: latest
+    digest: sha256:36c23a6d347166d3e507c95883cca61c7966ccbd274e0594110090f8cd1ce6a9
   - name: ghcr.io/lmbek/lmbek-hobby-placeholder1-service
-    newTag: latest
+    digest: sha256:c4f6106fcc882456f7754556fd8b6b34b98f2f241699a0ac5c84667b8a7ec7f6
   - name: ghcr.io/lmbek/lmbek-hobby-placeholder2-service
-    newTag: latest
+    digest: sha256:15484feedf7868d921ba4b9d1524bb00934802a209242d71e7fa4e89b0791b0d
   - name: ghcr.io/lmbek/lmbek-hobby-docs
-    newTag: latest
+    digest: sha256:24b5ca2d2a9d64c8fa7c5692ecd539ebeb4e582e825561f929304c8113bba8c1
