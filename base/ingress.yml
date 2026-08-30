@@ -5,48 +5,9 @@ metadata:
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
 spec:
+  ingressClassName: traefik
   rules:
-    - host: lmbek.local
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: placeholder1-service
-                port:
-                  number: 8082
-    - host: placeholder1.lmbek.local
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: placeholder1-service
-                port:
-                  number: 8082
-    - host: placeholder2.lmbek.local
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: placeholder2-service
-                port:
-                  number: 8081
-    - host: docs.lmbek.local
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: docs
-                port:
-                  number: 80
-    - host: web.lmbek.local
+    - host: lmbek.dk
       http:
         paths:
           - path: /
@@ -55,4 +16,44 @@ spec:
               service:
                 name: web-frontend
                 port:
-                  number: 8080
+                  name: http
+    - host: placeholder1.lmbek.dk
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: placeholder1-service
+                port:
+                  name: http
+    - host: placeholder2.lmbek.dk
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: placeholder2-service
+                port:
+                  name: http
+    - host: docs.lmbek.dk
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: docs
+                port:
+                  name: http
+    - host: web.lmbek.dk
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: web-frontend
+                port:
+                  name: http

@@ -4,6 +4,7 @@ kind: Kustomization
 namespace: production
 
 resources:
+  - namespace.yml
   - ../../base
 
 patches:

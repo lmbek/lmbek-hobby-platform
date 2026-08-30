@@ -8,8 +8,8 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: git@github.com:lmbek/lmbek-hobby-platform.git
-    targetRevision: HEAD
+    repoURL: https://github.com/lmbek/lmbek-hobby-platform.git
+    targetRevision: main
     path: overlays/staging
   destination:
     server: https://kubernetes.default.svc
@@ -18,5 +18,13 @@ spec:
     automated:
       prune: true
       selfHeal: true
+      allowEmpty: false
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
     syncOptions:
       - CreateNamespace=true
+      - PruneLast=true
