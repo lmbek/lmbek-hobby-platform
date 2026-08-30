@@ -15,6 +15,7 @@ concurrency:
 
 env:
   APP_DOMAIN: lmbek.dk
+  GHCR_USERNAME: lmbek
 
 jobs:
   deploy:
@@ -30,7 +31,7 @@ jobs:
 
       - name: Resolve production tags to immutable digests
         env:
-          GH_TOKEN: ${{ github.token }}
+          GHCR_PULL_TOKEN: ${{ secrets.GHCR_PULL_TOKEN }}
         run: |
           set -euo pipefail
           : > /tmp/image-digests
@@ -40,7 +41,7 @@ jobs:
             ghcr.io/lmbek/lmbek-hobby-placeholder2-service \
             ghcr.io/lmbek/lmbek-hobby-docs; do
             repository="${image#ghcr.io/}"
-            token=$(curl --fail --silent --show-error --user "${GITHUB_ACTOR}:${GH_TOKEN}" \
+            token=$(curl --fail --silent --show-error --user "${GHCR_USERNAME}:${GHCR_PULL_TOKEN}" \
               "https://ghcr.io/token?scope=repository:${repository}:pull&service=ghcr.io" | jq -r .token)
             digest=$(curl --fail --silent --show-error --head \
               --header "Authorization: Bearer ${token}" \
@@ -85,7 +86,20 @@ jobs:
           set -euo pipefail
           kubectl auth can-i patch deployments --namespace production | grep -qx yes
           kubectl auth can-i get secrets --namespace production | grep -qx no
+          kubectl auth can-i get secret/ghcr-pull --namespace production | grep -qx yes
           kubectl auth can-i get pods --all-namespaces | grep -qx no
+
+      - name: Refresh private registry credential
+        env:
+          GHCR_PULL_TOKEN: ${{ secrets.GHCR_PULL_TOKEN }}
+        run: |
+          set -euo pipefail
+          kubectl create secret docker-registry ghcr-pull \
+            --namespace production \
+            --docker-server ghcr.io \
+            --docker-username "$GHCR_USERNAME" \
+            --docker-password "$GHCR_PULL_TOKEN" \
+            --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Apply and wait for rolling deployment
         run: |

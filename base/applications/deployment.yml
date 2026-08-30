@@ -20,6 +20,8 @@ spec:
       labels:
         app.kubernetes.io/name: placeholder1-service
     spec:
+      imagePullSecrets:
+        - name: ghcr-pull
       securityContext:
         runAsNonRoot: true
         runAsUser: 10001
@@ -86,6 +88,8 @@ spec:
       labels:
         app.kubernetes.io/name: placeholder2-service
     spec:
+      imagePullSecrets:
+        - name: ghcr-pull
       securityContext:
         runAsNonRoot: true
         runAsUser: 10001
