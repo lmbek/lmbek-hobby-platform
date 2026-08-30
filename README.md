@@ -84,3 +84,8 @@ kubectl kustomize overlays/staging
 # Render Production Overlay:
 kubectl kustomize overlays/production
 ```
+
+Pull requests and pushes to `main` run the same production and staging renders in
+`.github/workflows/validate.yml`. This workflow validates manifests only; it never
+connects to the cluster or deploys anything. Argo CD is the CD system and watches
+`main` after a change is merged.
