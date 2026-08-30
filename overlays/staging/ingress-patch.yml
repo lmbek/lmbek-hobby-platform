@@ -2,4 +2,22 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: platform-ingress
-$patch: delete
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.middlewares: staging-redirect-to-https@kubernetescrd,staging-security-headers@kubernetescrd,staging-rate-limit@kubernetescrd
+spec:
+  tls:
+    - hosts:
+        - staging.lmbek.dk
+      secretName: staging-platform-tls
+  rules:
+    - host: staging.lmbek.dk
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: web-frontend
+                port:
+                  name: http

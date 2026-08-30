@@ -16,7 +16,7 @@ This repository holds the declarative Kubernetes manifests and Kustomize overlay
 │   ├── ingress.yml         Traefik path-based Ingress routing
 │   └── kustomization.yml
 ├── overlays/
-│   ├── staging/            Internal staging namespace and image digests
+│   ├── staging/            Staging namespace, HTTPS ingress, certificate, and image digests
 │   └── production/         Production namespace, hosts, certificate, and image digests
 └── argocd/                 ArgoCD Application CRDs
     ├── staging.yml
@@ -28,7 +28,7 @@ This repository holds the declarative Kubernetes manifests and Kustomize overlay
 ## 🔒 Automated TLS Certificates & Proxies
 
 - **cert-manager**: Automatically provisions and renews SSL/TLS certificates from Let's Encrypt using HTTP-01 challenges via Traefik.
-- **ClusterIssuer**: `letsencrypt-prod` issues the trusted production certificate.
+- **ClusterIssuer**: `letsencrypt-prod` issues trusted certificates for production and staging.
 - **Traefik Middlewares**:
   - `redirect-to-https`: Automatic HTTP to HTTPS upgrade.
   - `security-headers`: HSTS, X-Content-Type-Options, X-Frame-Options, X-XSS-Protection.
@@ -38,9 +38,9 @@ This repository holds the declarative Kubernetes manifests and Kustomize overlay
 
 ## 🌐 Public Ingress
 
-Only `https://lmbek.dk` is public and routes to `web-frontend:8080`. The
-documentation, placeholder services, and complete staging environment have no
-Ingress and are reachable only by workloads inside their Kubernetes namespace.
+`https://lmbek.dk` and `https://staging.lmbek.dk` route to their environment's
+`web-frontend:8080`. The documentation and placeholder services remain internal.
+Local development is HTTP-only and is configured separately in `local-orchestrator`.
 
 ---
 
@@ -48,7 +48,7 @@ Ingress and are reachable only by workloads inside their Kubernetes namespace.
 
 | Environment | Image Reference | Namespace | Target URL |
 |---|---|---|---|
-| **Staging** | Immutable `sha256` digest | `staging` | Internal only |
+| **Staging** | Immutable `sha256` digest | `staging` | `https://staging.lmbek.dk` |
 | **Production** | Immutable `sha256` digest | `production` | `https://lmbek.dk` |
 
 Service pushes build `staging-latest` images. Deploy one by resolving its registry

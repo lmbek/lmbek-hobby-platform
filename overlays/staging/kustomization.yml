@@ -6,6 +6,7 @@ namespace: staging
 resources:
   - namespace.yml
   - ../../base
+  - certificate.yml
 
 patches:
   - path: ingress-patch.yml
