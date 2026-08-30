@@ -3,8 +3,8 @@ kind: Ingress
 metadata:
   name: platform-ingress
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
-    traefik.ingress.kubernetes.io/router.middlewares: production-redirect-to-https@kubernetescrd,production-security-headers@kubernetescrd,production-rate-limit@kubernetescrd
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
 spec:
   tls:
     - hosts:
