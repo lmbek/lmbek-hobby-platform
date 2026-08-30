@@ -1,17 +1,3 @@
-# ─────────────────────────────────────────────────────────────────────────────
-# Kubernetes NetworkPolicies (Zero-Trust Namespace Isolation)
-# ─────────────────────────────────────────────────────────────────────────────
-
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: default-deny-all
-spec:
-  podSelector: {}
-  policyTypes:
-    - Ingress
-    - Egress
----
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -22,7 +8,6 @@ spec:
     - Ingress
     - Egress
   ingress:
-    # 1. Allow incoming traffic from Traefik Ingress controller in kube-system
     - from:
         - namespaceSelector:
             matchLabels:
@@ -39,11 +24,9 @@ spec:
           port: 8082
         - protocol: TCP
           port: 80
-    # 2. Allow intra-namespace communication between application pods
     - from:
         - podSelector: {}
   egress:
-    # 1. Allow cluster DNS resolution (kube-dns in kube-system)
     - to:
         - namespaceSelector:
             matchLabels:
@@ -53,10 +36,8 @@ spec:
           port: 53
         - protocol: TCP
           port: 53
-    # 2. Allow intra-namespace pod-to-pod communication
     - to:
         - podSelector: {}
-    # 3. Allow outbound HTTPS to public APIs/registries if needed
     - to:
         - ipBlock:
             cidr: 0.0.0.0/0
