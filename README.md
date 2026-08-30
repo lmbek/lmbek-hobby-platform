@@ -51,14 +51,16 @@ Local development is HTTP-only and is configured separately in `local-orchestrat
 | **Staging** | Immutable `sha256` digest | `staging` | `https://staging.lmbek.dk` |
 | **Production** | Immutable `sha256` digest | `production` | `https://lmbek.dk` |
 
-Service pushes to `main` trigger the automated release workflow. It receives the
-Buildx digest, updates and auto-merges `overlays/staging/kustomization.yml`, waits
-for the public staging health endpoint, and auto-merges the exact tested digest into
+Service pushes to `main` publish images to GHCR. Every five minutes, this repository's
+automated release workflow reads the public `staging-latest` manifest digests, updates
+and auto-merges `overlays/staging/kustomization.yml`, waits for the public staging
+health endpoint, and auto-merges the exact tested digests into
 `overlays/production/kustomization.yml`. Argo CD reconciles both namespaces from Git.
 
-The workflow requires a `PLATFORM_REPOSITORY_TOKEN` Actions secret with write access
-to this repository and permission to create/merge pull requests. It never accesses
-the cluster or production servers.
+The workflow uses the platform repository's built-in `GITHUB_TOKEN`; no
+`PLATFORM_REPOSITORY_TOKEN` or service-repository secrets are required. Enable
+repository auto-merge once so the automated pull requests can merge. It never
+accesses the cluster or production servers.
 
 For troubleshooting only, inspect referenced images from your local environment:
 
