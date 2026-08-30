@@ -4,13 +4,25 @@ kind: Kustomization
 namespace: production
 
 resources:
-  - namespace.yml
-  - ../../cert-manager
   - ../../base
-  - certificate.yml
 
-patches:
-  - path: ingress-patch.yml
+configMapGenerator:
+  - name: platform-config
+    literals:
+      - APP_DOMAIN=lmbek.dk
+
+replacements:
+  - source:
+      kind: ConfigMap
+      name: platform-config
+      fieldPath: data.APP_DOMAIN
+    targets:
+      - select:
+          kind: Ingress
+          name: platform-ingress
+        fieldPaths:
+          - spec.rules.0.host
+          - spec.tls.0.hosts.0
 
 images:
   - name: ghcr.io/lmbek/lmbek-hobby-web-frontend

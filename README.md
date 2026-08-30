@@ -1,97 +1,41 @@
-# Platform Kubernetes Manifests & GitOps State
+# Production Kubernetes platform
 
-This repository holds the declarative Kubernetes manifests and Kustomize overlays managed by ArgoCD.
+This repository is the Git-authoritative production state for one K3s server. It contains plain Kubernetes/Kustomize resources and one GitHub Actions CD workflow; it does not use Argo CD, cert-manager, staging, or a public Kubernetes API.
 
----
-
-## 📁 Manifest Organization
+## Layout
 
 ```text
-├── cert-manager/           Trusted Let's Encrypt ClusterIssuer
-├── base/                   Shared workload definitions (Deployments, Services, Ingress, Middlewares)
-│   ├── websites/           web-frontend website (Port 8080)
-│   ├── applications/       placeholder1 (8082) & placeholder2 (8081)
-│   ├── docs/               docs portal (Port 80)
-│   ├── middlewares.yml     Security headers, HTTPS redirect & rate limiting
-│   ├── ingress.yml         Traefik path-based Ingress routing
-│   └── kustomization.yml
-├── overlays/
-│   ├── staging/            Staging namespace, HTTPS ingress, certificate, and image digests
-│   └── production/         Production namespace, hosts, certificate, and image digests
-└── argocd/                 ArgoCD Application CRDs
-    ├── staging.yml
-    └── production.yml
+base/                    Deployments, ClusterIP Services, Ingress, policies
+overlays/production/     Domain configuration and immutable image digests
+.github/workflows/       Hosted validation and local least-privilege CD
 ```
 
----
+The namespace itself and `github-deployer` Role are created by immutable cloud-init. They are intentionally excluded from Kustomize because a namespaced deployment identity must not create namespaces or cluster-wide RBAC.
 
-## 🔒 Automated TLS Certificates & Proxies
-
-- **cert-manager**: Automatically provisions and renews SSL/TLS certificates from Let's Encrypt using HTTP-01 challenges via Traefik.
-- **ClusterIssuer**: `letsencrypt-prod` issues trusted certificates for production and staging.
-- **Traefik Middlewares**:
-  - `redirect-to-https`: Automatic HTTP to HTTPS upgrade.
-  - `security-headers`: HSTS, X-Content-Type-Options, X-Frame-Options, X-XSS-Protection.
-  - `rate-limit`: Request burst and rate protection.
-
----
-
-## 🌐 Public Ingress
-
-`https://lmbek.dk` and `https://staging.lmbek.dk` route to their environment's
-`web-frontend:8080`. The documentation and placeholder services remain internal.
-Local development is HTTP-only and is configured separately in `local-orchestrator`.
-
----
-
-## 🚀 Promotion & Deployment Lifecycle
-
-| Environment | Image Reference | Namespace | Target URL |
-|---|---|---|---|
-| **Staging** | Immutable `sha256` digest | `staging` | `https://staging.lmbek.dk` |
-| **Production** | Immutable `sha256` digest | `production` | `https://lmbek.dk` |
-
-Service pushes to `main` publish images to GHCR. Every five minutes, this repository's
-automated release workflow reads the public `staging-latest` manifest digests, updates
-and auto-merges `overlays/staging/kustomization.yml`, waits for the public staging
-health endpoint, and auto-merges the exact tested digests into
-`overlays/production/kustomization.yml`. Argo CD reconciles both namespaces from Git.
-
-The workflow uses the platform repository's built-in `GITHUB_TOKEN`; no
-`PLATFORM_REPOSITORY_TOKEN` or service-repository secrets are required. Enable
-repository auto-merge once so the automated pull requests can merge. It never
-accesses the cluster or production servers.
-
-For troubleshooting only, inspect referenced images from your local environment:
+## Validate
 
 ```bash
-docker buildx imagetools inspect ghcr.io/lmbek/lmbek-hobby-web-frontend:staging-latest
-docker buildx imagetools inspect ghcr.io/lmbek/lmbek-hobby-placeholder1-service:staging-latest
-docker buildx imagetools inspect ghcr.io/lmbek/lmbek-hobby-placeholder2-service:staging-latest
-docker buildx imagetools inspect ghcr.io/lmbek/lmbek-hobby-docs:staging-latest
-```
-
-Use the top-level `Digest` value for each image. Digest pinning makes production
-repeatable and causes an explicit Deployment rollout whenever a promoted digest changes.
-
----
-
-## 🛠️ Testing Manifests Locally
-
-You can render and validate Kustomize overlays using `kubectl`:
-
-```bash
-# Render Base:
-kubectl kustomize base
-
-# Render Staging Overlay:
-kubectl kustomize overlays/staging
-
-# Render Production Overlay:
 kubectl kustomize overlays/production
 ```
 
-Pull requests and pushes to `main` run the same production and staging renders in
-`.github/workflows/validate.yml`. This workflow validates manifests only; it never
-connects to the cluster or deploys anything. Argo CD is the CD system and watches
-`main` after a change is merged.
+Set `APP_DOMAIN` in `overlays/production/kustomization.yml` to the same value as Terraform's `domain`. Traefik performs global HTTP-to-HTTPS redirect and stores automatically renewed Let's Encrypt certificates on its local persistent volume.
+
+## Automated deployment
+
+The scheduled `Deploy production` workflow runs only on the `k3s-production` self-hosted runner. It authenticates to GHCR with the least-privilege built-in token, resolves every `production` tag to a digest, records changes in this repository, verifies Kubernetes authorization boundaries, applies the overlay, waits for four rollouts, and checks the public `/healthz` endpoint.
+
+Pull requests and manifest validation always run on GitHub-hosted runners. Never add a `pull_request` trigger to a job using the production runner.
+
+Images are immutable in the rendered manifests. The moving `production` tag is only a discovery pointer and is never deployed directly.
+
+## Operations
+
+```bash
+kubectl -n production get deployments,pods,services,ingress
+kubectl -n production rollout history deployment/web-frontend
+kubectl -n production rollout undo deployment/web-frontend
+```
+
+After emergency rollback, revert the corresponding digest commit so Git remains authoritative. One replica minimizes resource usage but cannot guarantee zero downtime during node failure; the rolling strategy uses a surge pod and no intentional unavailable pod during normal updates.
+
+Secret manifests with real values are forbidden. Add only `secret.example.yaml` placeholders if an application later needs runtime configuration.

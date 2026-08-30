@@ -5,6 +5,7 @@ metadata:
   labels:
     app.kubernetes.io/name: placeholder1-service
 spec:
+  type: ClusterIP
   ports:
     - name: http
       port: 8082
@@ -19,6 +20,7 @@ metadata:
   labels:
     app.kubernetes.io/name: placeholder2-service
 spec:
+  type: ClusterIP
   ports:
     - name: http
       port: 8081

@@ -3,11 +3,17 @@ kind: Ingress
 metadata:
   name: platform-ingress
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
+    traefik.ingress.kubernetes.io/router.middlewares: production-security-headers@kubernetescrd,production-rate-limit@kubernetescrd
 spec:
   ingressClassName: traefik
+  tls:
+    - hosts:
+        - app.example.com
   rules:
-    - host: lmbek.dk
+    - host: app.example.com
       http:
         paths:
           - path: /
