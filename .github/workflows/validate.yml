@@ -1,0 +1,35 @@
+name: Validate Kubernetes manifests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  kustomize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: v1.31.0
+
+      - name: Render production overlay
+        run: kubectl kustomize overlays/production > /tmp/production.yaml
+
+      - name: Render staging overlay
+        run: kubectl kustomize overlays/staging > /tmp/staging.yaml
+
+      - name: Check rendered routes
+        run: |
+          grep -q 'host: lmbek.dk' /tmp/production.yaml
+          grep -q 'host: staging.lmbek.dk' /tmp/staging.yaml
+          grep -q 'secretName: production-platform-tls' /tmp/production.yaml
+          grep -q 'secretName: staging-platform-tls' /tmp/staging.yaml
