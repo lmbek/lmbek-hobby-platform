@@ -1,0 +1,158 @@
+name: Automated image release
+
+on:
+  repository_dispatch:
+    types: [image-published]
+  pull_request:
+    types: [closed]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: platform-release
+  cancel-in-progress: false
+
+env:
+  PLATFORM_REPOSITORY: lmbek/lmbek-hobby-platform
+
+jobs:
+  update-staging:
+    if: github.event_name == 'repository_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out platform state
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PLATFORM_REPOSITORY_TOKEN }}
+          ref: main
+
+      - name: Pin image in staging
+        env:
+          IMAGE: ${{ github.event.client_payload.image }}
+          DIGEST: ${{ github.event.client_payload.digest }}
+        run: |
+          test "$IMAGE" = ghcr.io/lmbek/lmbek-hobby-web-frontend \
+            || test "$IMAGE" = ghcr.io/lmbek/lmbek-hobby-placeholder1-service \
+            || test "$IMAGE" = ghcr.io/lmbek/lmbek-hobby-placeholder2-service \
+            || test "$IMAGE" = ghcr.io/lmbek/lmbek-hobby-docs
+          [[ "$DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]
+          python3 - "$IMAGE" "$DIGEST" <<'PY'
+          from pathlib import Path
+          import re
+          import sys
+
+          image, digest = sys.argv[1:]
+          path = Path("overlays/staging/kustomization.yml")
+          text = path.read_text()
+          pattern = rf"(?ms)(- name: {re.escape(image)}\n\s+digest: )sha256:[0-9a-f]{{64}}"
+          updated, count = re.subn(pattern, rf"\g<1>{digest}", text)
+          if count != 1:
+              raise SystemExit(f"expected one staging image entry for {image}, found {count}")
+          path.write_text(updated)
+          PY
+
+      - name: Create and merge staging pull request
+        env:
+          GH_TOKEN: ${{ secrets.PLATFORM_REPOSITORY_TOKEN }}
+          IMAGE: ${{ github.event.client_payload.image }}
+          SOURCE_COMMIT: ${{ github.event.client_payload.commit }}
+        run: |
+          service="${IMAGE##*/}"
+          branch="automation/staging-${service}-${SOURCE_COMMIT:0:12}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add overlays/staging/kustomization.yml
+          if git diff --cached --quiet; then
+            echo "Staging already uses this image digest"
+            exit 0
+          fi
+          git commit -m "chore: deploy ${service} to staging"
+          git push --set-upstream origin "$branch"
+          pr=$(gh pr create --repo "$PLATFORM_REPOSITORY" --base main --head "$branch" \
+            --title "chore: deploy ${service} to staging" \
+            --body "Automated image release from ${SOURCE_COMMIT}. Argo CD will deploy staging after merge.")
+          gh pr merge "$pr" --repo "$PLATFORM_REPOSITORY" --auto --squash --delete-branch
+
+  promote-production:
+    if: github.event_name == 'pull_request' && github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'automation/staging-')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out merged platform state
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PLATFORM_REPOSITORY_TOKEN }}
+          ref: main
+          fetch-depth: 0
+
+      - name: Find the promoted image
+        id: image
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+        run: |
+          git diff "$BASE_SHA" "$MERGE_SHA" -- overlays/staging/kustomization.yml > /tmp/staging.diff
+          python3 <<'PY' >> "$GITHUB_OUTPUT"
+          import re
+          from pathlib import Path
+
+          diff = Path("/tmp/staging.diff").read_text()
+          matches = re.findall(
+              r"\+\s*- name: (ghcr\.io/lmbek/lmbek-hobby-[^\s]+)\n\+\s+digest: (sha256:[0-9a-f]{64})",
+              diff,
+          )
+          if len(matches) != 1:
+              raise SystemExit(f"expected one changed image digest, found {len(matches)}")
+          print(f"image={matches[0][0]}")
+          print(f"digest={matches[0][1]}")
+          PY
+
+      - name: Wait for staging health
+        run: |
+          curl --fail --silent --show-error --retry 30 --retry-delay 10 \
+            --retry-connrefused https://staging.lmbek.dk/healthz
+
+      - name: Pin the tested image in production
+        env:
+          IMAGE: ${{ steps.image.outputs.image }}
+          DIGEST: ${{ steps.image.outputs.digest }}
+        run: |
+          python3 - "$IMAGE" "$DIGEST" <<'PY'
+          from pathlib import Path
+          import re
+          import sys
+
+          image, digest = sys.argv[1:]
+          path = Path("overlays/production/kustomization.yml")
+          text = path.read_text()
+          pattern = rf"(?ms)(- name: {re.escape(image)}\n\s+digest: )sha256:[0-9a-f]{{64}}"
+          updated, count = re.subn(pattern, rf"\g<1>{digest}", text)
+          if count != 1:
+              raise SystemExit(f"expected one production image entry for {image}, found {count}")
+          path.write_text(updated)
+          PY
+
+      - name: Create and merge production pull request
+        env:
+          GH_TOKEN: ${{ secrets.PLATFORM_REPOSITORY_TOKEN }}
+          IMAGE: ${{ steps.image.outputs.image }}
+        run: |
+          service="${IMAGE##*/}"
+          branch="automation/production-${service}-${GITHUB_SHA:0:12}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add overlays/production/kustomization.yml
+          if git diff --cached --quiet; then
+            echo "Production already uses this tested image digest"
+            exit 0
+          fi
+          git commit -m "chore: promote ${service} to production"
+          git push --set-upstream origin "$branch"
+          pr=$(gh pr create --repo "$PLATFORM_REPOSITORY" --base main --head "$branch" \
+            --title "chore: promote ${service} to production" \
+            --body "Automated promotion after staging health verification.")
+          gh pr merge "$pr" --repo "$PLATFORM_REPOSITORY" --auto --squash --delete-branch
